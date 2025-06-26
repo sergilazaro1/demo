@@ -1,0 +1,72 @@
+name: Dependabot frontend tests
+ 
+on:
+  pull_request: #Run every time a PR is created by dependabot
+    types: [ opened, synchronize, reopened ]
+    paths:
+      - 'javascript/**'
+ 
+concurrency:
+  group: dependabot-frontend-${{ github.event.number }}
+  cancel-in-progress: true
+ 
+permissions: # grants the GITHUB_TOKEN secret the needed permissions to merge PR's
+  pull-requests: write
+  contents: write
+ 
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    env:
+      working-directory: ./javascript
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    timeout-minutes: 20
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.13.x'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Npm install
+        working-directory: ${{env.working-directory}}
+        run: npm install
+
+#       - name: Execute linters
+#         working-directory: ${{env.working-directory}}
+#         run: npm run lint
+
+      - name: Run tests
+        working-directory: ${{env.working-directory}}
+        run: npm test
+ 
+      - name: Add dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@v1.3.1
+ 
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+ 
+        #Branch protection rule is configured to require at least one review ->
+        #(manual - for major, automatically for minor/patch versions)
+      - name: Approve patch and minor updates
+        if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' || steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'}}
+        run: gh pr review $PR_URL --approve -b "I'm **approving** this pull request because **it includes a patch or minor update**"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
