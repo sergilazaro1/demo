@@ -6,10 +6,6 @@ on:
     paths:
       - 'javascript/**'
  
-concurrency:
-  group: dependabot-frontend-${{ github.event.number }}
-  cancel-in-progress: true
- 
 permissions: # grants the GITHUB_TOKEN secret the needed permissions to merge PR's
   pull-requests: write
   contents: write
