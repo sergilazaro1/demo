@@ -5,13 +5,13 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-      time: "09:00"
+      time: "08:30"
       timezone: "Europe/Berlin"
   - package-ecosystem: npm
     directory: "/javascript"
     schedule:
       interval: "daily"
-      time: "09:00"
+      time: "08:30"
       timezone: "Europe/Berlin"
   - package-ecosystem: bundler
     directory: "/ruby"
