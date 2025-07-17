@@ -9,6 +9,12 @@ updates:
     directory: "/javascript"
     schedule:
       interval: "weekly"
+    target-branch: "feature/dependabot-test"
+    open-pull-requests-limit: 5
+    ignore:
+      #Ignore major updates
+      - dependency-name: "*"
+        update-types: [ "version-update:semver-major" ]
   - package-ecosystem: bundler
     directory: "/ruby"
     schedule:
