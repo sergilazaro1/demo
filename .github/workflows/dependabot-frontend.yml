@@ -17,22 +17,52 @@ jobs:
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     timeout-minutes: 30
     steps:
+    
+      - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.13.x'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+            
+      - name: Npm install
+        working-directory: ${{env.working-directory}}
+        run: npm install
+
+#       - name: Execute linters
+#         working-directory: ${{env.working-directory}}
+#         run: npm run lint
+
+      - name: Run tests
+        working-directory: ${{env.working-directory}}
+        run: npm test
+   
       - name: Add dependabot metadata
         id: dependabot-metadata
         uses: dependabot/fetch-metadata@v1.3.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      #Branch protection rule is configured to require at least one review ->
-        #(manual - for major, automatically for minor/patch versions)
+   
+         #Branch protection rule is configured to require at least one review ->
+           #(manual - for major, automatically for minor/patch versions)
       - name: Approve patch and minor updates
         if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' || steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'}}
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
- 
+    
       - name: Enable auto-merge for Dependabot PRs
         run: gh pr merge --auto --merge "$PR_URL"
         env:
