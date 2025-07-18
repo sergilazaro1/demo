@@ -50,7 +50,7 @@ jobs:
    
       - name: Add dependabot metadata
         id: dependabot-metadata
-        uses: dependabot/fetch-metadata@v1.3.1
+        uses: dependabot/fetch-metadata@v2.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
    
